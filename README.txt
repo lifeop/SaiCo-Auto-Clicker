@@ -8,6 +8,7 @@ Default Keybinds:
 Features:
 
 * CPS capped at 10
+* Right-Clicker mode
 * Hold down to auto-click
 * Safe Auto-Disable - automatically pauses when interacting with GUIs (inventory, container, etc.), while remembering the active state for resuming
 * Block breaking support - allows the breaking of blocks while clicker is enabled; block interactions override auto-clicker
