@@ -98,8 +98,9 @@ public class AutoClickerMod {
             }
 
             if (currentMode == Mode.RIGHT && Mouse.isButtonDown(1)) {
-                if (held != null && held.getItem() == Items.paper &&
-                        now - lastClick >= 1000 / rightClickCPS) {
+                if (held != null &&
+                    (held.getItem() == Items.paper || held.getItem() == Items.book) &&
+                    now - lastClick >= 1000 / rightClickCPS) {
                     lastClick = now;
                     mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, held);
                 }
