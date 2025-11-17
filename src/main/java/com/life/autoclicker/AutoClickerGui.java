@@ -57,26 +57,8 @@ public class AutoClickerGui extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
 
-        for (Particle p : particles) {
-            p.prevX = p.x;
-            p.prevY = p.y;
-
-            p.y -= p.speed;
-            p.angle += p.angularSpeed;
-            p.x = logoX + logoWidth / 2 + (float)Math.cos(p.angle) * p.radius;
-
-            p.alpha -= 0.002f;
-            if (p.y < 0 || p.alpha <= 0) {
-                p.reset(random, logoX, logoY, logoWidth, logoHeight);
-            }
-        }
-
-        for (Particle p : particles) {
-            int alpha = (int)(p.alpha * 255);
-            int color = (alpha << 24) | 0xFFFFFF;
-            drawRect((int)p.prevX, (int)p.prevY, (int)p.prevX + 2, (int)p.prevY + 2, color);
-            drawRect((int)p.x, (int)p.y, (int)p.x + 2, (int)p.y + 2, color);
-        }
+        updateParticles();
+        drawParticles();
 
         GL11.glColor4f(1f, 1f, 1f, 1f);
         mc.getTextureManager().bindTexture(LOGO);
@@ -84,6 +66,39 @@ public class AutoClickerGui extends GuiScreen {
 
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
+
+    private void updateParticles() {
+        for (Particle p : particles) {
+            p.prevX = p.x;
+            p.prevY = p.y;
+
+            p.y -= p.speed;
+
+            p.angle += p.angularSpeed;
+            p.x = logoX + logoWidth / 2 + (float)Math.cos(p.angle) * p.radius;
+
+            p.alpha -= 0.002f;
+
+            if (p.y < 0 || p.alpha <= 0) {
+                p.reset(random, logoX, logoY, logoWidth, logoHeight);
+            }
+        }
+    }
+
+    private void drawParticles() {
+        for (Particle p : particles) {
+            int alpha = (int)(p.alpha * 255);
+            int color;
+            if (p.isNetherParticle) {
+                color = (alpha << 24) | (128 << 16) | (0 << 8) | 255;
+            } else {
+                color = (alpha << 24) | 0xFFFFFF;
+            }
+
+            drawRect((int)p.prevX, (int)p.prevY, (int)p.prevX + 2, (int)p.prevY + 2, color);
+            drawRect((int)p.x, (int)p.y, (int)p.x + 2, (int)p.y + 2, color);
+        }
+    }    
 
     @Override
     protected void actionPerformed(GuiButton button) throws IOException {
@@ -165,15 +180,27 @@ public class AutoClickerGui extends GuiScreen {
     }
 
     private static class Particle {
-        float x, y, prevX, prevY, speed, alpha, angle, angularSpeed, radius;
-        Particle(Random random, int logoX, int logoY, int logoWidth, int logoHeight) { reset(random, logoX, logoY, logoWidth, logoHeight); }
-        boolean dragging = false;
+        float x, y;
+        float prevX, prevY;
+        float speed;
+        float alpha;
+        boolean isNetherParticle;
+
+        float angle;
+        float angularSpeed;
+        float radius;
+
+        Particle(Random random, int logoX, int logoY, int logoWidth, int logoHeight) {
+            reset(random, logoX, logoY, logoWidth, logoHeight);
+        }
+
         void reset(Random random, int logoX, int logoY, int logoWidth, int logoHeight) {
             radius = 20 + random.nextFloat() * 60;
             angle = random.nextFloat() * 2 * (float)Math.PI;
             angularSpeed = 0.01f + random.nextFloat() * 0.03f;
             speed = 0.3f + random.nextFloat() * 1.2f;
             alpha = 0.1f + random.nextFloat() * 0.3f;
+            isNetherParticle = random.nextBoolean();
             y = logoY + logoHeight / 2 + random.nextFloat() * 50;
             x = logoX + logoWidth / 2 + (float)Math.cos(angle) * radius;
             prevX = x;
