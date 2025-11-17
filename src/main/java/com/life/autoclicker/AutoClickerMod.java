@@ -29,7 +29,7 @@ public class AutoClickerMod {
 
     public boolean clicking = false;
     public int leftClickCPS = 10;
-    private final int rightClickCPS = 20;
+    private final int rightClickCPS = 50;
     private long lastClick = 0;
 
     private boolean wasClickingBeforeGui = false;
@@ -43,8 +43,8 @@ public class AutoClickerMod {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        toggleKey = new KeyBinding("Toggle AutoClicker", Keyboard.KEY_R, "SaiCo Auto-Clicker");
-        guiKey = new KeyBinding("Open AutoClicker GUI", Keyboard.KEY_RSHIFT, "SaiCo Auto-Clicker");
+        toggleKey = new KeyBinding("Toggle Auto-Clicker", Keyboard.KEY_R, "SaiCo Auto-Clicker");
+        guiKey = new KeyBinding("Open Auto-Clicker GUI", Keyboard.KEY_RSHIFT, "SaiCo Auto-Clicker");
         ClientRegistry.registerKeyBinding(toggleKey);
         ClientRegistry.registerKeyBinding(guiKey);
 
@@ -86,7 +86,6 @@ public class AutoClickerMod {
             long now = System.currentTimeMillis();
             ItemStack held = mc.thePlayer.getHeldItem();
 
-            // LEFT CLICK MODE
             if (currentMode == Mode.LEFT) {
                 if (Mouse.isButtonDown(0) && now - lastClick >= 1000 / Math.max(1, leftClickCPS)) {
                     lastClick = now;
