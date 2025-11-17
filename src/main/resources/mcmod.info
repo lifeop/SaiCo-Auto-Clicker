@@ -1,0 +1,16 @@
+[
+{
+  "modid": "saicoautoclicker",
+  "name": "SaiCo Auto-Clicker",
+  "description": "An autoclicker for 1.8.9 with a maximum CPS of 10.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Life"],
+  "credits": "Life",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
