@@ -2,6 +2,8 @@ package com.life.autoclicker;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.item.ItemStack;
+import net.minecraft.init.Items;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -13,27 +15,34 @@ import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import java.io.*;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 @Mod(modid = "saicoautoclicker", name = "SaiCo AutoClicker", version = "1.0")
 public class AutoClickerMod {
-    private Minecraft mc;
+
     public KeyBinding toggleKey;
     public KeyBinding guiKey;
+
+    public enum Mode { LEFT, RIGHT }
+    public Mode currentMode = Mode.LEFT;
+
     public boolean clicking = false;
-    public int cps = 10;
+    public int leftClickCPS = 10;
+    private final int rightClickCPS = 20;
     private long lastClick = 0;
+
     private boolean wasClickingBeforeGui = false;
     private boolean lastClickingState = false;
+
     private long lastServerActionBarTime = 0;
     private String lastServerActionBar = "";
     private static final long SERVER_ACTIONBAR_COOLDOWN = 1500;
+
     public boolean showActionBar = true;
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        mc = Minecraft.getMinecraft();
-
         toggleKey = new KeyBinding("Toggle AutoClicker", Keyboard.KEY_R, "SaiCo Auto-Clicker");
         guiKey = new KeyBinding("Open AutoClicker GUI", Keyboard.KEY_RSHIFT, "SaiCo Auto-Clicker");
         ClientRegistry.registerKeyBinding(toggleKey);
@@ -42,14 +51,18 @@ public class AutoClickerMod {
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(this);
     }
 
+    @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event) {
+        Minecraft mc = Minecraft.getMinecraft();
         if (toggleKey.isPressed()) toggleAutoClicker();
         if (guiKey.isPressed()) mc.displayGuiScreen(new AutoClickerGui(this));
     }
 
+    @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
+        Minecraft mc = Minecraft.getMinecraft();
         if (mc.thePlayer == null || mc.theWorld == null) return;
 
         boolean guiOpen = mc.currentScreen != null;
@@ -71,19 +84,29 @@ public class AutoClickerMod {
 
         if (clicking) {
             long now = System.currentTimeMillis();
-            if (Mouse.isButtonDown(0) && now - lastClick >= 1000 / Math.max(1, cps)) {
-                lastClick = now;
+            ItemStack held = mc.thePlayer.getHeldItem();
 
-                mc.thePlayer.swingItem();
+            // LEFT CLICK MODE
+            if (currentMode == Mode.LEFT) {
+                if (Mouse.isButtonDown(0) && now - lastClick >= 1000 / Math.max(1, leftClickCPS)) {
+                    lastClick = now;
+                    mc.thePlayer.swingItem();
 
-                if (mc.objectMouseOver != null && mc.objectMouseOver.entityHit != null) {
-                    mc.playerController.attackEntity(mc.thePlayer, mc.objectMouseOver.entityHit);
+                    if (mc.objectMouseOver != null && mc.objectMouseOver.entityHit != null) {
+                        mc.playerController.attackEntity(mc.thePlayer, mc.objectMouseOver.entityHit);
+                    }
                 }
             }
 
-            if (showActionBar) {
-                updateActionBar();
+            if (currentMode == Mode.RIGHT && Mouse.isButtonDown(1)) {
+                if (held != null && held.getItem() == Items.paper &&
+                        now - lastClick >= 1000 / rightClickCPS) {
+                    lastClick = now;
+                    mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, held);
+                }
             }
+
+            if (showActionBar) updateActionBar();
         } else {
             if (lastClickingState) clearActionBar();
         }
@@ -91,6 +114,7 @@ public class AutoClickerMod {
         lastClickingState = clicking;
     }
 
+    @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public void onChatReceived(ClientChatReceivedEvent event) {
         if (event.type == 2) {
@@ -99,56 +123,58 @@ public class AutoClickerMod {
         }
     }
 
+    @SideOnly(Side.CLIENT)
     public void updateActionBar() {
-        if (mc.thePlayer == null) return;
-        if (!showActionBar) return;
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.thePlayer == null || !showActionBar) return;
 
         long now = System.currentTimeMillis();
-
         if (now - lastServerActionBarTime < SERVER_ACTIONBAR_COOLDOWN) return;
 
-        String ourMsg = 
-                EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "Auto" +
-                EnumChatFormatting.BLUE + "" + EnumChatFormatting.BOLD + "Clicker " +
-                EnumChatFormatting.GREEN + "Enabled " +
-                EnumChatFormatting.GRAY + "| " +
-                EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "CPS: " +
-                EnumChatFormatting.LIGHT_PURPLE + "" + EnumChatFormatting.BOLD + cps;
+        String msg;
+        if (currentMode == Mode.RIGHT) {
+            msg = EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "Auto" +
+                  EnumChatFormatting.BLUE + "" + EnumChatFormatting.BOLD + "Clicker " +
+                  EnumChatFormatting.DARK_GRAY + "| " +
+                  EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "Mode: " +
+                  EnumChatFormatting.LIGHT_PURPLE + "Right-Click";
+        } else {
+            msg = EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "Auto" +
+                    EnumChatFormatting.BLUE + "" + EnumChatFormatting.BOLD + "Clicker " +
+                    EnumChatFormatting.DARK_GRAY + "| " +
+                    EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "Mode: " +
+                    EnumChatFormatting.LIGHT_PURPLE + "Left-Click " +
+                    EnumChatFormatting.DARK_GRAY + "| " +
+                    EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "CPS: " +
+                    EnumChatFormatting.LIGHT_PURPLE + leftClickCPS;
+        }
 
-        mc.ingameGUI.setRecordPlaying(ourMsg, true);
+        mc.ingameGUI.setRecordPlaying(msg, true);
     }
 
+    @SideOnly(Side.CLIENT)
     public void clearActionBar() {
-        mc.ingameGUI.setRecordPlaying("", true);
+        Minecraft.getMinecraft().ingameGUI.setRecordPlaying("", true);
     }
 
+    @SideOnly(Side.CLIENT)
     public void toggleAutoClicker() {
         clicking = !clicking;
+        Minecraft mc = Minecraft.getMinecraft();
 
         if (mc.thePlayer != null) {
-            if (clicking) {
-                mc.thePlayer.addChatMessage(new ChatComponentText(
-                        EnumChatFormatting.GREEN + "" + EnumChatFormatting.BOLD + "SaiCo" +
-                                EnumChatFormatting.LIGHT_PURPLE + "" + EnumChatFormatting.BOLD + "PvP " +
-                                EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "Auto" +
-                                EnumChatFormatting.BLUE + "" + EnumChatFormatting.BOLD + "Clicker " +
-                                EnumChatFormatting.GREEN + "Enabled"
-                ));
-            } else {
-                mc.thePlayer.addChatMessage(new ChatComponentText(
-                        EnumChatFormatting.GREEN + "" + EnumChatFormatting.BOLD + "SaiCo" +
-                                EnumChatFormatting.LIGHT_PURPLE + "" + EnumChatFormatting.BOLD + "PvP " +
-                                EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "Auto" +
-                                EnumChatFormatting.BLUE + "" + EnumChatFormatting.BOLD + "Clicker " +
-                                EnumChatFormatting.RED + "Disabled"
-                ));
-            }
+            String status = clicking ? EnumChatFormatting.GREEN + "Enabled" : EnumChatFormatting.RED + "Disabled";
+            mc.thePlayer.addChatMessage(new ChatComponentText(
+                    EnumChatFormatting.GREEN + "" + EnumChatFormatting.BOLD + "SaiCo" +
+                            EnumChatFormatting.LIGHT_PURPLE + "" + EnumChatFormatting.BOLD + "PvP " +
+                            EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "Auto" +
+                            EnumChatFormatting.BLUE + "" + EnumChatFormatting.BOLD + "Clicker " +
+                            EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "- " +
+                            status
+            ));
         }
 
-        if (clicking && showActionBar) {
-            updateActionBar();
-        } else {
-            clearActionBar();
-        }
+        if (clicking && showActionBar) updateActionBar();
+        else clearActionBar();
     }
 }
