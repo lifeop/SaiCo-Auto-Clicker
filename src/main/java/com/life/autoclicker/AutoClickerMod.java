@@ -40,6 +40,12 @@ public class AutoClickerMod {
     private static final long SERVER_ACTIONBAR_COOLDOWN = 1500;
 
     public boolean showActionBar = true;
+    
+    @SideOnly(Side.CLIENT)
+    public boolean isIntendedEnabled() {
+        // Returns true if auto-clicker should be active (accounts for GUI being open)
+        return clicking || wasClickingBeforeGui;
+    }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
