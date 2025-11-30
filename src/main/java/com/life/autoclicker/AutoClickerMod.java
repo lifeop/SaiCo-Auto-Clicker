@@ -91,6 +91,19 @@ public class AutoClickerMod {
         if (clicking) {
             long now = System.currentTimeMillis();
             ItemStack held = mc.thePlayer.getHeldItem();
+            
+            // Check if player is using a bow or eating
+            ItemStack itemInUse = mc.thePlayer.getItemInUse();
+            boolean isUsingBow = itemInUse != null && itemInUse.getItem() == Items.bow && mc.thePlayer.getItemInUseDuration() > 0;
+            boolean isEating = itemInUse != null && itemInUse.getItem() != null && 
+                              itemInUse.getItem().getItemUseAction(itemInUse) == net.minecraft.item.EnumAction.EAT && 
+                              mc.thePlayer.getItemInUseDuration() > 0;
+            
+            // Don't attack if bow is drawn or player is eating
+            if (isUsingBow || isEating) {
+                if (showActionBar) updateActionBar();
+                return;
+            }
 
             if (currentMode == Mode.LEFT) {
                 if (Mouse.isButtonDown(0) && now - lastClick >= 1000 / Math.max(1, leftClickCPS)) {
