@@ -43,7 +43,6 @@ public class AutoClickerMod {
     
     @SideOnly(Side.CLIENT)
     public boolean isIntendedEnabled() {
-        // Returns true if auto-clicker should be active (accounts for GUI being open)
         return clicking || wasClickingBeforeGui;
     }
 
@@ -92,14 +91,12 @@ public class AutoClickerMod {
             long now = System.currentTimeMillis();
             ItemStack held = mc.thePlayer.getHeldItem();
             
-            // Check if player is using a bow or eating
             ItemStack itemInUse = mc.thePlayer.getItemInUse();
             boolean isUsingBow = itemInUse != null && itemInUse.getItem() == Items.bow && mc.thePlayer.getItemInUseDuration() > 0;
             boolean isEating = itemInUse != null && itemInUse.getItem() != null && 
                               itemInUse.getItem().getItemUseAction(itemInUse) == net.minecraft.item.EnumAction.EAT && 
                               mc.thePlayer.getItemInUseDuration() > 0;
             
-            // Don't attack if bow is drawn or player is eating
             if (isUsingBow || isEating) {
                 if (showActionBar) updateActionBar();
                 return;
