@@ -17,6 +17,7 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.client.FMLClientHandler;
 
 @Mod(modid = "saicoautoclicker", name = "SaiCo AutoClicker", version = "1.0")
 public class AutoClickerMod {
@@ -59,7 +60,7 @@ public class AutoClickerMod {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event) {
-        Minecraft mc = Minecraft.getMinecraft();
+        Minecraft mc = FMLClientHandler.instance().getClient();
         if (toggleKey.isPressed()) toggleAutoClicker();
         if (guiKey.isPressed()) mc.displayGuiScreen(new AutoClickerGui(this));
     }
@@ -67,7 +68,7 @@ public class AutoClickerMod {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
-        Minecraft mc = Minecraft.getMinecraft();
+        Minecraft mc = FMLClientHandler.instance().getClient();
         if (mc.thePlayer == null || mc.theWorld == null) return;
 
         boolean guiOpen = mc.currentScreen != null;
@@ -141,7 +142,7 @@ public class AutoClickerMod {
 
     @SideOnly(Side.CLIENT)
     public void updateActionBar() {
-        Minecraft mc = Minecraft.getMinecraft();
+        Minecraft mc = FMLClientHandler.instance().getClient();
         if (mc.thePlayer == null || !showActionBar) return;
 
         long now = System.currentTimeMillis();
@@ -170,13 +171,13 @@ public class AutoClickerMod {
 
     @SideOnly(Side.CLIENT)
     public void clearActionBar() {
-        Minecraft.getMinecraft().ingameGUI.setRecordPlaying("", true);
+        FMLClientHandler.instance().getClient().ingameGUI.setRecordPlaying("", true);
     }
 
     @SideOnly(Side.CLIENT)
     public void toggleAutoClicker() {
         clicking = !clicking;
-        Minecraft mc = Minecraft.getMinecraft();
+        Minecraft mc = FMLClientHandler.instance().getClient();
 
         if (mc.thePlayer != null) {
             String status = clicking ? EnumChatFormatting.GREEN + "Enabled" : EnumChatFormatting.RED + "Disabled";

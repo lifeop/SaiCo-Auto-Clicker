@@ -6,20 +6,22 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.input.Keyboard;
 import java.io.IOException;
 
+@SideOnly(Side.CLIENT)
 public class AutoClickerGui extends GuiScreen {
 
     private final AutoClickerMod mod;
     private static final ResourceLocation LOGO = new ResourceLocation("autoclicker", "textures/gui/saico_logo.png");
 
-    // Panel dimensions (compact and centered)
     private int panelWidth = 600;
     private int panelHeight = 350;
-    private int panelX = 0; // Will be calculated in initGui
-    private int panelY = 0; // Will be calculated in initGui
+    private int panelX = 0;
+    private int panelY = 0;
 
     private int sidebarWidth = 200;
 
@@ -28,7 +30,6 @@ public class AutoClickerGui extends GuiScreen {
     private CustomGuiButton actionBarToggleButton;
     private CustomGuiButton closeButton;
     
-    // Status display
     private String statusText = "";
     private int statusColor = 0xFFAAAAAA;
 
@@ -40,19 +41,14 @@ public class AutoClickerGui extends GuiScreen {
     public void initGui() {
         buttonList.clear();
 
-        // Calculate panel position to center it properly
         panelX = (width - panelWidth) / 2;
-        int margin = 40; // Equal margin on all sides (top, bottom, left, right)
-        // Calculate available space (screen height minus margins)
+        int margin = 40;
         int screenAvailableHeight = height - (2 * margin);
-        // If panel is too tall, reduce its height
         if (panelHeight > screenAvailableHeight) {
             panelHeight = screenAvailableHeight;
         }
-        // Center the panel in available space, ensuring equal gaps
         panelY = margin + (screenAvailableHeight - panelHeight) / 2;
 
-        // Sidebar buttons (left side)
         int sidebarY = panelY + 80;
         int sidebarButtonWidth = 170;
         int sidebarButtonHeight = 25;
@@ -62,21 +58,17 @@ public class AutoClickerGui extends GuiScreen {
         closeButton.setColors(0xFF8B2C3E, 0xFF9B3C4E, 0xFF8B2C3E);
         buttonList.add(closeButton);
 
-        // Main content area controls - calculate centered vertical position
         int contentStartX = panelX + sidebarWidth + 30;
         
-        // Calculate total height of content elements
-        int titleHeight = 27; // Title + subtitle (15 + 12)
+        int titleHeight = 27;
         int cpsSliderHeight = 20;
         int buttonHeight = 25;
-        int spacing = 40; // Between CPS slider and buttons row
+        int spacing = 40;
         int totalContentHeight = titleHeight + cpsSliderHeight + spacing + buttonHeight;
         
-        // Center content vertically in available space
-        int availableHeight = panelHeight - 15; // From title start to bottom
+        int availableHeight = panelHeight - 15;
         int contentStartY = panelY + 15 + titleHeight + (availableHeight - totalContentHeight) / 2;
 
-        // CPS Slider (clamp current value to max of 10) - at top
         int currentCPS = Math.min(mod.leftClickCPS, 10);
         if (mod.leftClickCPS > 10) {
             mod.leftClickCPS = 10;
@@ -85,47 +77,37 @@ public class AutoClickerGui extends GuiScreen {
                 "CPS: ", 1, 10, currentCPS);
         buttonList.add(cpsSlider);
 
-        // Button dimensions for side-by-side layout
         int buttonWidth = 140;
-        int buttonSpacing = 20; // Space between the two buttons
+        int buttonSpacing = 20;
         int buttonsY = contentStartY + cpsSliderHeight + spacing;
 
-        // Mode Button (left side)
         modeButton = new CustomGuiButton(2, contentStartX, buttonsY, buttonWidth, buttonHeight,
                 "Mode: " + (mod.currentMode == AutoClickerMod.Mode.LEFT ? "Left-Click" : "Right-Click"));
         modeButton.setColors(0xFF1A2332, 0xFF2C3E50, 0xFF2C5F8F);
         buttonList.add(modeButton);
 
-        // Action Bar Toggle Button (right side, same line)
         String actionBarText = "Action Bar: " + (mod.showActionBar ? "Enabled" : "Disabled");
         actionBarToggleButton = new CustomGuiButton(3, contentStartX + buttonWidth + buttonSpacing, buttonsY, buttonWidth, buttonHeight, actionBarText);
         actionBarToggleButton.setColors(0xFF1A2332, 0xFF2C3E50, mod.showActionBar ? 0xFF2C5F8F : 0xFF1A2332);
         actionBarToggleButton.setSelected(mod.showActionBar);
         buttonList.add(actionBarToggleButton);
         
-        // Update status display
         updateStatusDisplay();
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        // Draw semi-transparent overlay behind panel (darken the game world)
         drawRect(0, 0, width, height, 0x80000000);
 
-        // Draw panel background with rounded corners effect
-        // Main panel background (dark blue with transparency)
         drawRect(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xD81A2332);
 
-        // Panel border
-        drawRect(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF2C5F8F); // Top border
-        drawRect(panelX, panelY + panelHeight - 1, panelX + panelWidth, panelY + panelHeight, 0xFF2C5F8F); // Bottom border
-        drawRect(panelX, panelY, panelX + 1, panelY + panelHeight, 0xFF2C5F8F); // Left border
-        drawRect(panelX + panelWidth - 1, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF2C5F8F); // Right border
+        drawRect(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF2C5F8F);
+        drawRect(panelX, panelY + panelHeight - 1, panelX + panelWidth, panelY + panelHeight, 0xFF2C5F8F);
+        drawRect(panelX, panelY, panelX + 1, panelY + panelHeight, 0xFF2C5F8F);
+        drawRect(panelX + panelWidth - 1, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF2C5F8F);
 
-        // Draw sidebar background (dark blue with transparency)
         drawRect(panelX, panelY, panelX + sidebarWidth, panelY + panelHeight, 0xD81A2332);
 
-        // Draw logo
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
         GlStateManager.color(1f, 1f, 1f, 1f);
@@ -135,33 +117,26 @@ public class AutoClickerGui extends GuiScreen {
         int logoY = panelY + 20;
         drawModalRectWithCustomSizedTexture(logoX, logoY, 0, 0, logoSize, logoSize, logoSize, logoSize);
 
-        // Draw title in sidebar (below logo)
         String title = EnumChatFormatting.BOLD + "AUTO CLICKER";
         int titleWidth = this.fontRendererObj.getStringWidth(title);
         int titleY = logoY + logoSize + 15;
         this.fontRendererObj.drawStringWithShadow(title, panelX + (sidebarWidth - titleWidth) / 2, titleY, 0xFFFFFFFF);
 
-        // Draw separator line in sidebar (below the title)
         int separatorY = titleY + 12;
         drawRect(panelX + 15, separatorY, panelX + sidebarWidth - 15, separatorY + 1, 0xFF2C5F8F);
 
-        // Draw status indicator in sidebar (below separator line)
         drawStatusIndicator(separatorY);
 
-        // Draw main content area background (semi-transparent blue)
         drawRect(panelX + sidebarWidth, panelY, panelX + panelWidth, panelY + panelHeight, 0x800A0E1A);
 
-        // Draw content title
         drawContentTitle();
         
-        // Draw tooltips/descriptions
         drawTooltips(mouseX, mouseY);
 
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
     private void drawContentTitle() {
-        // Draw title in main area
         String title = EnumChatFormatting.WHITE + "" + EnumChatFormatting.BOLD + "Settings";
         String subtitle = EnumChatFormatting.GRAY + "Configure auto-clicker options";
 
@@ -173,7 +148,6 @@ public class AutoClickerGui extends GuiScreen {
     }
     
     private void updateStatusDisplay() {
-        // Check if auto-clicker is intended to be enabled (accounts for GUI being open)
         boolean isActive = mod.isIntendedEnabled();
         if (isActive) {
             statusText = EnumChatFormatting.GREEN + "" + EnumChatFormatting.BOLD + "ACTIVE";
@@ -185,24 +159,19 @@ public class AutoClickerGui extends GuiScreen {
     }
     
     private void drawStatusIndicator(int separatorY) {
-        // Update status display
         updateStatusDisplay();
         
-        // Draw status box in sidebar, below separator line
-        int statusY = separatorY + 10; // Below separator line
-        int statusWidth = sidebarWidth - 30; // Leave margin on sides
+        int statusY = separatorY + 10;
+        int statusWidth = sidebarWidth - 30;
         int statusHeight = 25;
-        int statusX = panelX + (sidebarWidth - statusWidth) / 2; // Center within sidebar
+        int statusX = panelX + (sidebarWidth - statusWidth) / 2;
         
-        // Background
         drawRect(statusX, statusY, statusX + statusWidth, statusY + statusHeight, 0x80000000);
-        // Border
         drawRect(statusX, statusY, statusX + statusWidth, statusY + 1, statusColor);
         drawRect(statusX, statusY + statusHeight - 1, statusX + statusWidth, statusY + statusHeight, statusColor);
         drawRect(statusX, statusY, statusX + 1, statusY + statusHeight, statusColor);
         drawRect(statusX + statusWidth - 1, statusY, statusX + statusWidth, statusY + statusHeight, statusColor);
         
-        // Status text
         String statusLabel = EnumChatFormatting.WHITE + "Status: " + statusText;
         int textWidth = this.fontRendererObj.getStringWidth(statusLabel);
         this.fontRendererObj.drawStringWithShadow(statusLabel, statusX + (statusWidth - textWidth) / 2, 
@@ -212,14 +181,12 @@ public class AutoClickerGui extends GuiScreen {
     private void drawTooltips(int mouseX, int mouseY) {
         int contentStartX = panelX + sidebarWidth + 30;
         
-        // Mode Button tooltip - positioned below button
         if (modeButton != null && mouseX >= modeButton.xPosition && mouseX < modeButton.xPosition + modeButton.width &&
             mouseY >= modeButton.yPosition && mouseY < modeButton.yPosition + modeButton.height) {
             String tooltip = EnumChatFormatting.GRAY + "Switch between left and right click modes";
             this.fontRendererObj.drawString(tooltip, contentStartX, modeButton.yPosition + modeButton.height + 2, 0xFFAAAAAA);
         }
         
-        // Action Bar Button tooltip - positioned below button, starting from button's left edge
         if (actionBarToggleButton != null && mouseX >= actionBarToggleButton.xPosition && 
             mouseX < actionBarToggleButton.xPosition + actionBarToggleButton.width &&
             mouseY >= actionBarToggleButton.yPosition && mouseY < actionBarToggleButton.yPosition + actionBarToggleButton.height) {
@@ -241,7 +208,6 @@ public class AutoClickerGui extends GuiScreen {
             actionBarToggleButton.displayString = actionBarText;
             actionBarToggleButton.setSelected(mod.showActionBar);
             actionBarToggleButton.setColors(0xFF1A2332, 0xFF2C3E50, mod.showActionBar ? 0xFF2C5F8F : 0xFF1A2332);
-            // Clear action bar if disabled
             if (!mod.showActionBar) {
                 mod.clearActionBar();
             }
@@ -326,33 +292,26 @@ public class AutoClickerGui extends GuiScreen {
             this.hovered = mouseX >= this.xPosition && mouseY >= this.yPosition &&
                     mouseX < this.xPosition + this.width && mouseY < this.yPosition + this.height;
 
-            // Draw slider background track
             int trackHeight = 4;
             int trackY = yPosition + height / 2 - trackHeight / 2;
             drawRect(xPosition, trackY, xPosition + width, trackY + trackHeight, 0xFF1A2332);
 
-            // Draw slider track border
             drawRect(xPosition, trackY, xPosition + width, trackY + 1, 0xFF2C5F8F);
             drawRect(xPosition, trackY + trackHeight - 1, xPosition + width, trackY + trackHeight, 0xFF2C5F8F);
 
-            // Calculate handle position
             float percent = (float) (value - min) / (max - min);
             int handleX = xPosition + (int) (percent * width) - 6;
             int handleY = yPosition + height / 2 - 8;
 
-            // Draw handle - filled with color
             int handleColor = dragging || hovered ? 0xFF3C6F9F : 0xFF2C5F8F;
             drawRect(handleX, handleY, handleX + 12, handleY + 16, handleColor);
-            // Handle border
             drawRect(handleX, handleY, handleX + 12, handleY + 1, 0xFF2C5F8F);
             drawRect(handleX, handleY + 15, handleX + 12, handleY + 16, 0xFF2C5F8F);
             drawRect(handleX, handleY, handleX + 1, handleY + 16, 0xFF2C5F8F);
             drawRect(handleX + 11, handleY, handleX + 12, handleY + 16, 0xFF2C5F8F);
 
-            // Draw filled portion of track
             drawRect(xPosition, trackY, xPosition + (int) (percent * width), trackY + trackHeight, 0xFF2C5F8F);
 
-            // Draw label below slider
             int textColor = this.enabled ? 0xFFFFFF : 0xA0A0A0;
             this.drawCenteredString(mc.fontRendererObj, displayString, xPosition + width / 2, yPosition + height + 5, textColor);
         }
