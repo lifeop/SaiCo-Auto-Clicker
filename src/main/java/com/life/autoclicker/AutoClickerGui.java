@@ -28,10 +28,15 @@ public class AutoClickerGui extends GuiScreen {
     private CPSSlider cpsSlider;
     private CustomGuiButton modeButton;
     private CustomGuiButton actionBarToggleButton;
+    private CustomGuiButton bindToggleKeyButton;
+    private CustomGuiButton bindGuiKeyButton;
     private CustomGuiButton closeButton;
     
     private String statusText = "";
     private int statusColor = 0xFFAAAAAA;
+
+    private enum KeybindTarget { TOGGLE, GUI }
+    private KeybindTarget waitingForBind = null;
 
     public AutoClickerGui(AutoClickerMod mod) {
         this.mod = mod;
@@ -49,7 +54,6 @@ public class AutoClickerGui extends GuiScreen {
         }
         panelY = margin + (screenAvailableHeight - panelHeight) / 2;
 
-        int sidebarY = panelY + 80;
         int sidebarButtonWidth = 170;
         int sidebarButtonHeight = 25;
         int sidebarX = panelX + 15;
@@ -63,23 +67,36 @@ public class AutoClickerGui extends GuiScreen {
         int titleHeight = 27;
         int cpsSliderHeight = 20;
         int buttonHeight = 25;
+        int keybindGap = 10;
+        int keybindSectionHeight = (buttonHeight * 2) + keybindGap;
+        int keybindToSliderSpacing = 18;
         int spacing = 40;
-        int totalContentHeight = titleHeight + cpsSliderHeight + spacing + buttonHeight;
+        int totalContentHeight = titleHeight + keybindSectionHeight + keybindToSliderSpacing + cpsSliderHeight + spacing + buttonHeight;
         
         int availableHeight = panelHeight - 15;
         int contentStartY = panelY + 15 + titleHeight + (availableHeight - totalContentHeight) / 2;
 
-        int currentCPS = Math.min(mod.leftClickCPS, 10);
-        if (mod.leftClickCPS > 10) {
-            mod.leftClickCPS = 10;
-        }
-        cpsSlider = new CPSSlider(1, contentStartX, contentStartY, 300, 20,
+        int keybindsY = contentStartY;
+        bindGuiKeyButton = new CustomGuiButton(5, contentStartX, keybindsY, 300, buttonHeight,
+                "Open Auto-Clicker GUI: " + keyName(mod.guiKey));
+        bindGuiKeyButton.setColors(0xFF1A2332, 0xFF2C3E50, 0xFF2C5F8F);
+        buttonList.add(bindGuiKeyButton);
+
+        bindToggleKeyButton = new CustomGuiButton(4, contentStartX, keybindsY + buttonHeight + keybindGap, 300, buttonHeight,
+                "Toggle Auto-Clicker: " + keyName(mod.toggleKey));
+        bindToggleKeyButton.setColors(0xFF1A2332, 0xFF2C3E50, 0xFF2C5F8F);
+        buttonList.add(bindToggleKeyButton);
+
+        int sliderY = keybindsY + keybindSectionHeight + keybindToSliderSpacing;
+        int currentCPS = Math.max(1, Math.min(mod.leftClickCPS, 10));
+        mod.leftClickCPS = currentCPS;
+        cpsSlider = new CPSSlider(1, contentStartX, sliderY, 300, 20,
                 "CPS: ", 1, 10, currentCPS);
         buttonList.add(cpsSlider);
 
         int buttonWidth = 140;
         int buttonSpacing = 20;
-        int buttonsY = contentStartY + cpsSliderHeight + spacing;
+        int buttonsY = sliderY + cpsSliderHeight + spacing;
 
         modeButton = new CustomGuiButton(2, contentStartX, buttonsY, buttonWidth, buttonHeight,
                 "Mode: " + (mod.currentMode == AutoClickerMod.Mode.LEFT ? "Left-Click" : "Right-Click"));
@@ -131,6 +148,7 @@ public class AutoClickerGui extends GuiScreen {
 
         drawContentTitle();
         
+        updateKeybindConflictStyles();
         drawTooltips(mouseX, mouseY);
 
         super.drawScreen(mouseX, mouseY, partialTicks);
@@ -211,7 +229,51 @@ public class AutoClickerGui extends GuiScreen {
             if (!mod.showActionBar) {
                 mod.clearActionBar();
             }
+        } else if (button == bindToggleKeyButton) {
+            waitingForBind = KeybindTarget.TOGGLE;
+            bindToggleKeyButton.displayString = "Toggle Auto-Clicker: " + EnumChatFormatting.YELLOW + "Press a key...";
+        } else if (button == bindGuiKeyButton) {
+            waitingForBind = KeybindTarget.GUI;
+            bindGuiKeyButton.displayString = "Open Auto-Clicker GUI: " + EnumChatFormatting.YELLOW + "Press a key...";
         }
+    }
+
+    @Override
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        if (waitingForBind != null) {
+            if (keyCode == Keyboard.KEY_ESCAPE) {
+                if (waitingForBind == KeybindTarget.TOGGLE && mod.toggleKey != null) {
+                    mod.toggleKey.setKeyCode(0);
+                } else if (waitingForBind == KeybindTarget.GUI && mod.guiKey != null) {
+                    mod.guiKey.setKeyCode(0);
+                }
+
+                net.minecraft.client.settings.KeyBinding.resetKeyBindingArrayAndHash();
+                if (mc != null && mc.gameSettings != null) {
+                    mc.gameSettings.saveOptions();
+                }
+
+                waitingForBind = null;
+                refreshKeybindLabels();
+                return;
+            }
+
+            if (waitingForBind == KeybindTarget.TOGGLE && mod.toggleKey != null) {
+                mod.toggleKey.setKeyCode(keyCode);
+            } else if (waitingForBind == KeybindTarget.GUI && mod.guiKey != null) {
+                mod.guiKey.setKeyCode(keyCode);
+            }
+
+            net.minecraft.client.settings.KeyBinding.resetKeyBindingArrayAndHash();
+            if (mc != null && mc.gameSettings != null) {
+                mc.gameSettings.saveOptions();
+            }
+
+            waitingForBind = null;
+            refreshKeybindLabels();
+            return;
+        }
+        super.keyTyped(typedChar, keyCode);
     }
 
     @Override
@@ -241,6 +303,59 @@ public class AutoClickerGui extends GuiScreen {
 
     @Override
     public boolean doesGuiPauseGame() {
+        return false;
+    }
+
+    private void refreshKeybindLabels() {
+        if (bindToggleKeyButton != null) {
+            bindToggleKeyButton.displayString = "Toggle Auto-Clicker: " + keyName(mod.toggleKey);
+        }
+        if (bindGuiKeyButton != null) {
+            bindGuiKeyButton.displayString = "Open Auto-Clicker GUI: " + keyName(mod.guiKey);
+        }
+        updateKeybindConflictStyles();
+    }
+
+    private static String keyName(net.minecraft.client.settings.KeyBinding binding) {
+        if (binding == null) return "NONE";
+        int code = binding.getKeyCode();
+        if (code == 0) return "NONE";
+        String name = Keyboard.getKeyName(code);
+        return name == null ? ("Key " + code) : name;
+    }
+
+    private void updateKeybindConflictStyles() {
+        if (bindToggleKeyButton != null) {
+            updateKeybindButtonStyle(bindToggleKeyButton, mod.toggleKey);
+        }
+        if (bindGuiKeyButton != null) {
+            updateKeybindButtonStyle(bindGuiKeyButton, mod.guiKey);
+        }
+    }
+
+    private void updateKeybindButtonStyle(CustomGuiButton button, net.minecraft.client.settings.KeyBinding binding) {
+        boolean conflict = hasKeybindConflict(binding);
+        if (conflict) {
+            button.setColors(0xFF8B2C3E, 0xFF9B3C4E, 0xFFB33A4F);
+        } else {
+            button.setColors(0xFF1A2332, 0xFF2C3E50, 0xFF2C5F8F);
+        }
+    }
+
+    private boolean hasKeybindConflict(net.minecraft.client.settings.KeyBinding binding) {
+        if (binding == null || mc == null || mc.gameSettings == null) return false;
+        int code = binding.getKeyCode();
+        if (code == 0) return false;
+
+        int matches = 0;
+        net.minecraft.client.settings.KeyBinding[] all = mc.gameSettings.keyBindings;
+        if (all == null) return false;
+        for (net.minecraft.client.settings.KeyBinding kb : all) {
+            if (kb != null && kb.getKeyCode() == code) {
+                matches++;
+                if (matches > 1) return true;
+            }
+        }
         return false;
     }
 

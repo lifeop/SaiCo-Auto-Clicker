@@ -30,8 +30,7 @@ public class AutoClickerMod {
 
     public boolean clicking = false;
     public int leftClickCPS = 10;
-    private final int rightClickCPS = 50;
-    private long lastClick = 0;
+    private long lastLeftClick = 0;
 
     private boolean wasClickingBeforeGui = false;
     private boolean lastClickingState = false;
@@ -97,15 +96,18 @@ public class AutoClickerMod {
             boolean isEating = itemInUse != null && itemInUse.getItem() != null && 
                               itemInUse.getItem().getItemUseAction(itemInUse) == net.minecraft.item.EnumAction.EAT && 
                               mc.thePlayer.getItemInUseDuration() > 0;
+            boolean isBlocking = itemInUse != null && itemInUse.getItem() != null &&
+                              itemInUse.getItem().getItemUseAction(itemInUse) == net.minecraft.item.EnumAction.BLOCK &&
+                              mc.thePlayer.getItemInUseDuration() > 0;
             
-            if (isUsingBow || isEating) {
+            if (isUsingBow || isEating || isBlocking) {
                 if (showActionBar) updateActionBar();
                 return;
             }
 
             if (currentMode == Mode.LEFT) {
-                if (Mouse.isButtonDown(0) && now - lastClick >= 1000 / Math.max(1, leftClickCPS)) {
-                    lastClick = now;
+                if (Mouse.isButtonDown(0) && now - lastLeftClick >= 1000 / Math.max(1, leftClickCPS)) {
+                    lastLeftClick = now;
                     mc.thePlayer.swingItem();
 
                     if (mc.objectMouseOver != null && mc.objectMouseOver.entityHit != null) {
@@ -116,9 +118,7 @@ public class AutoClickerMod {
 
             if (currentMode == Mode.RIGHT && Mouse.isButtonDown(1)) {
                 if (held != null &&
-                    (held.getItem() == Items.paper || held.getItem() == Items.book) &&
-                    now - lastClick >= 1000 / rightClickCPS) {
-                    lastClick = now;
+                    (held.getItem() == Items.paper || held.getItem() == Items.book)) {
                     mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, held);
                 }
             }
