@@ -320,8 +320,20 @@ public class AutoClickerGui extends GuiScreen {
         if (binding == null) return "NONE";
         int code = binding.getKeyCode();
         if (code == 0) return "NONE";
-        String name = Keyboard.getKeyName(code);
-        return name == null ? ("Key " + code) : name;
+        if (code < 0) {
+            int btn = -100 - code;
+            if (btn == 0) return "Left Click";
+            if (btn == 1) return "Right Click";
+            if (btn == 2) return "Middle Click";
+            return "Mouse " + (btn + 1);
+        }
+        if (code > 255) return "Key " + code;
+        try {
+            String name = Keyboard.getKeyName(code);
+            return name == null ? ("Key " + code) : name;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return "Key " + code;
+        }
     }
 
     private void updateKeybindConflictStyles() {
