@@ -57,11 +57,23 @@ public class AutoClickerMod {
     }
 
     @SideOnly(Side.CLIENT)
-    @SubscribeEvent
-    public void onKeyInput(InputEvent.KeyInputEvent event) {
+    private void handleKeybindInput() {
         Minecraft mc = FMLClientHandler.instance().getClient();
         if (toggleKey.isPressed()) toggleAutoClicker();
         if (guiKey.isPressed()) mc.displayGuiScreen(new AutoClickerGui(this));
+    }
+
+    @SideOnly(Side.CLIENT)
+    @SubscribeEvent
+    public void onKeyInput(InputEvent.KeyInputEvent event) {
+        handleKeybindInput();
+    }
+
+    /** Mouse-bound keys do not fire {@link InputEvent.KeyInputEvent}; use this so GUI/toggle work. */
+    @SideOnly(Side.CLIENT)
+    @SubscribeEvent
+    public void onMouseInput(InputEvent.MouseInputEvent event) {
+        handleKeybindInput();
     }
 
     @SideOnly(Side.CLIENT)

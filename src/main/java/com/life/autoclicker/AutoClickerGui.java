@@ -231,10 +231,10 @@ public class AutoClickerGui extends GuiScreen {
             }
         } else if (button == bindToggleKeyButton) {
             waitingForBind = KeybindTarget.TOGGLE;
-            bindToggleKeyButton.displayString = "Toggle Auto-Clicker: " + EnumChatFormatting.YELLOW + "Press a key...";
+            bindToggleKeyButton.displayString = "Toggle Auto-Clicker: " + EnumChatFormatting.YELLOW + "Key or mouse...";
         } else if (button == bindGuiKeyButton) {
             waitingForBind = KeybindTarget.GUI;
-            bindGuiKeyButton.displayString = "Open Auto-Clicker GUI: " + EnumChatFormatting.YELLOW + "Press a key...";
+            bindGuiKeyButton.displayString = "Open Auto-Clicker GUI: " + EnumChatFormatting.YELLOW + "Key or mouse...";
         }
     }
 
@@ -258,26 +258,34 @@ public class AutoClickerGui extends GuiScreen {
                 return;
             }
 
-            if (waitingForBind == KeybindTarget.TOGGLE && mod.toggleKey != null) {
-                mod.toggleKey.setKeyCode(keyCode);
-            } else if (waitingForBind == KeybindTarget.GUI && mod.guiKey != null) {
-                mod.guiKey.setKeyCode(keyCode);
-            }
-
-            net.minecraft.client.settings.KeyBinding.resetKeyBindingArrayAndHash();
-            if (mc != null && mc.gameSettings != null) {
-                mc.gameSettings.saveOptions();
-            }
-
-            waitingForBind = null;
-            refreshKeybindLabels();
+            finishKeybindWithKeyCode(keyCode);
             return;
         }
         super.keyTyped(typedChar, keyCode);
     }
 
+    private void finishKeybindWithKeyCode(int keyCode) {
+        if (waitingForBind == KeybindTarget.TOGGLE && mod.toggleKey != null) {
+            mod.toggleKey.setKeyCode(keyCode);
+        } else if (waitingForBind == KeybindTarget.GUI && mod.guiKey != null) {
+            mod.guiKey.setKeyCode(keyCode);
+        }
+
+        net.minecraft.client.settings.KeyBinding.resetKeyBindingArrayAndHash();
+        if (mc != null && mc.gameSettings != null) {
+            mc.gameSettings.saveOptions();
+        }
+
+        waitingForBind = null;
+        refreshKeybindLabels();
+    }
+
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        if (waitingForBind != null) {
+            finishKeybindWithKeyCode(-100 + mouseButton);
+            return;
+        }
         super.mouseClicked(mouseX, mouseY, mouseButton);
         if (cpsSlider != null) {
             cpsSlider.mousePressed(mc, mouseX, mouseY);
@@ -321,11 +329,11 @@ public class AutoClickerGui extends GuiScreen {
         int code = binding.getKeyCode();
         if (code == 0) return "NONE";
         if (code < 0) {
-            int btn = -100 - code;
+            int btn = code + 100;
             if (btn == 0) return "Left Click";
             if (btn == 1) return "Right Click";
             if (btn == 2) return "Middle Click";
-            return "Mouse " + (btn + 1);
+            return "Button " + (btn + 1);
         }
         if (code > 255) return "Key " + code;
         try {
