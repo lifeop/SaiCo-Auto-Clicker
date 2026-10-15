@@ -32,8 +32,6 @@ All three can be changed in the settings menu or in Minecraft's Controls screen,
 
 **Right click.** Hold right mouse while holding paper or a book.
 
-Clicks also pause while you are drawing a bow, eating, drinking, or blocking.
-
 ## Settings menu
 
 - Active / Inactive status
