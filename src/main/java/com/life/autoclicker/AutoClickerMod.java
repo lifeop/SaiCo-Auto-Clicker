@@ -19,11 +19,12 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.client.FMLClientHandler;
 
-@Mod(modid = "saicoautoclicker", name = "SaiCo AutoClicker", version = "1.0")
+@Mod(modid = "saicoautoclicker", name = "SaiCo AutoClicker", version = "2.0", clientSideOnly = true)
 public class AutoClickerMod {
 
     public KeyBinding toggleKey;
     public KeyBinding guiKey;
+    public KeyBinding modeKey;
 
     public enum Mode { LEFT, RIGHT }
     public Mode currentMode = Mode.LEFT;
@@ -33,6 +34,7 @@ public class AutoClickerMod {
     private long lastLeftClick = 0;
 
     private boolean wasClickingBeforeGui = false;
+    private boolean keybindsSuspended = false;
     private boolean lastClickingState = false;
 
     private long lastServerActionBarTime = 0;
@@ -40,27 +42,97 @@ public class AutoClickerMod {
     private static final long SERVER_ACTIONBAR_COOLDOWN = 1500;
 
     public boolean showActionBar = true;
+    public boolean keybindsHidden = true;
+    public boolean uiSoundsMuted = false;
     
     @SideOnly(Side.CLIENT)
     public boolean isIntendedEnabled() {
         return clicking || wasClickingBeforeGui;
     }
 
+    @SideOnly(Side.CLIENT)
+    public void toggleClickMode() {
+        currentMode = currentMode == Mode.LEFT ? Mode.RIGHT : Mode.LEFT;
+        SaicoSounds.saveGameplay(this);
+    }
+
+    @SideOnly(Side.CLIENT)
+    public void setLeftClickCPS(int cps) {
+        int next = Math.max(1, Math.min(10, cps));
+        if (next == leftClickCPS) {
+            return;
+        }
+        leftClickCPS = next;
+        SaicoSounds.saveGameplay(this);
+    }
+
+    @SideOnly(Side.CLIENT)
+    public void setShowActionBar(boolean show) {
+        if (show == showActionBar) {
+            return;
+        }
+        showActionBar = show;
+        SaicoSounds.saveGameplay(this);
+    }
+
+    @SideOnly(Side.CLIENT)
+    public void setKeybindsSuspended(boolean suspended) {
+        this.keybindsSuspended = suspended;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public boolean isKeybindsHidden() {
+        return keybindsHidden;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public void setKeybindsHidden(boolean hidden) {
+        this.keybindsHidden = hidden;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public void toggleIntended() {
+        if (isIntendedEnabled()) {
+            clicking = false;
+            wasClickingBeforeGui = false;
+            clearActionBar();
+        } else {
+            clicking = false;
+            wasClickingBeforeGui = true;
+        }
+    }
+
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         toggleKey = new KeyBinding("Toggle Auto-Clicker", Keyboard.KEY_R, "SaiCo Auto-Clicker");
         guiKey = new KeyBinding("Open Auto-Clicker GUI", Keyboard.KEY_RSHIFT, "SaiCo Auto-Clicker");
+        modeKey = new KeyBinding("Toggle Click Mode", Keyboard.KEY_G, "SaiCo Auto-Clicker");
         ClientRegistry.registerKeyBinding(toggleKey);
         ClientRegistry.registerKeyBinding(guiKey);
+        ClientRegistry.registerKeyBinding(modeKey);
+        SaicoSounds.load(this);
 
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(this);
     }
 
     @SideOnly(Side.CLIENT)
     private void handleKeybindInput() {
+        if (keybindsSuspended) {
+            if (toggleKey != null) toggleKey.isPressed();
+            if (guiKey != null) guiKey.isPressed();
+            if (modeKey != null) modeKey.isPressed();
+            return;
+        }
         Minecraft mc = FMLClientHandler.instance().getClient();
-        if (toggleKey.isPressed()) toggleAutoClicker();
+        if (toggleKey.isPressed()) {
+            toggleAutoClicker();
+            SaicoSounds.playUi(mc.getSoundHandler());
+        }
         if (guiKey.isPressed()) mc.displayGuiScreen(new AutoClickerGui(this));
+        if (modeKey.isPressed() && isIntendedEnabled()) {
+            toggleClickMode();
+            SaicoSounds.playUi(mc.getSoundHandler());
+        }
     }
 
     @SideOnly(Side.CLIENT)
@@ -69,7 +141,6 @@ public class AutoClickerMod {
         handleKeybindInput();
     }
 
-    /** Mouse-bound keys do not fire {@link InputEvent.KeyInputEvent}; use this so GUI/toggle work. */
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public void onMouseInput(InputEvent.MouseInputEvent event) {
@@ -108,11 +179,14 @@ public class AutoClickerMod {
             boolean isEating = itemInUse != null && itemInUse.getItem() != null && 
                               itemInUse.getItem().getItemUseAction(itemInUse) == net.minecraft.item.EnumAction.EAT && 
                               mc.thePlayer.getItemInUseDuration() > 0;
+            boolean isDrinking = itemInUse != null && itemInUse.getItem() != null &&
+                              itemInUse.getItem().getItemUseAction(itemInUse) == net.minecraft.item.EnumAction.DRINK &&
+                              mc.thePlayer.getItemInUseDuration() > 0;
             boolean isBlocking = itemInUse != null && itemInUse.getItem() != null &&
                               itemInUse.getItem().getItemUseAction(itemInUse) == net.minecraft.item.EnumAction.BLOCK &&
                               mc.thePlayer.getItemInUseDuration() > 0;
             
-            if (isUsingBow || isEating || isBlocking) {
+            if (isUsingBow || isEating || isDrinking || isBlocking) {
                 if (showActionBar) updateActionBar();
                 return;
             }

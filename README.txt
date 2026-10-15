@@ -2,7 +2,9 @@ An auto-clicker with a maximum CPS of 10, made for 1.8.9
 
 Default Keybinds:
 
+
 * R - Toggle on/off autoclicker
+* G - Toggle click mode
 * RShift - Open settings GUI
 
 Features:

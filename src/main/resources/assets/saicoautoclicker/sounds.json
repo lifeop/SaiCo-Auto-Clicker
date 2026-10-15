@@ -1,0 +1,200 @@
+{
+  "air_sweep": {
+    "category": "master",
+    "sounds": [
+      "air_sweep"
+    ]
+  },
+  "baby_click": {
+    "category": "master",
+    "sounds": [
+      "baby_click"
+    ]
+  },
+  "big_toggle": {
+    "category": "master",
+    "sounds": [
+      "big_toggle"
+    ]
+  },
+  "bleepy_toggle": {
+    "category": "master",
+    "sounds": [
+      "bleepy_toggle"
+    ]
+  },
+  "button_solid": {
+    "category": "master",
+    "sounds": [
+      "button_solid"
+    ]
+  },
+  "buzz_snap": {
+    "category": "master",
+    "sounds": [
+      "buzz_snap"
+    ]
+  },
+  "chunk_key": {
+    "category": "master",
+    "sounds": [
+      "chunk_key"
+    ]
+  },
+  "digi_chunk_3": {
+    "category": "master",
+    "sounds": [
+      "digi_chunk_3"
+    ]
+  },
+  "digi_select": {
+    "category": "master",
+    "sounds": [
+      "digi_select"
+    ]
+  },
+  "glass_beads": {
+    "category": "master",
+    "sounds": [
+      "glass_beads"
+    ]
+  },
+  "glitch_flam": {
+    "category": "master",
+    "sounds": [
+      "glitch_flam"
+    ]
+  },
+  "hightech": {
+    "category": "master",
+    "sounds": [
+      "hightech"
+    ]
+  },
+  "key_chonk": {
+    "category": "master",
+    "sounds": [
+      "key_chonk"
+    ]
+  },
+  "keyboard_snap": {
+    "category": "master",
+    "sounds": [
+      "keyboard_snap"
+    ]
+  },
+  "keycap_roll": {
+    "category": "master",
+    "sounds": [
+      "keycap_roll"
+    ]
+  },
+  "keypad_click": {
+    "category": "master",
+    "sounds": [
+      "keypad_click"
+    ]
+  },
+  "lazer_click": {
+    "category": "master",
+    "sounds": [
+      "lazer_click"
+    ]
+  },
+  "lazer_click_2": {
+    "category": "master",
+    "sounds": [
+      "lazer_click_2"
+    ]
+  },
+  "low_profi_2": {
+    "category": "master",
+    "sounds": [
+      "low_profi_2"
+    ]
+  },
+  "mechanism": {
+    "category": "master",
+    "sounds": [
+      "mechanism"
+    ]
+  },
+  "old_keycap": {
+    "category": "master",
+    "sounds": [
+      "old_keycap"
+    ]
+  },
+  "old_tech_click": {
+    "category": "master",
+    "sounds": [
+      "old_tech_click"
+    ]
+  },
+  "percussive_2": {
+    "category": "master",
+    "sounds": [
+      "percussive_2"
+    ]
+  },
+  "radio_button": {
+    "category": "master",
+    "sounds": [
+      "radio_button"
+    ]
+  },
+  "rubber_duck_clicks_5": {
+    "category": "master",
+    "sounds": [
+      "rubber_duck_clicks_5"
+    ]
+  },
+  "rubber_duck_clicks_6": {
+    "category": "master",
+    "sounds": [
+      "rubber_duck_clicks_6"
+    ]
+  },
+  "super_switch": {
+    "category": "master",
+    "sounds": [
+      "super_switch"
+    ]
+  },
+  "swish_2": {
+    "category": "master",
+    "sounds": [
+      "swish_2"
+    ]
+  },
+  "switch_throw": {
+    "category": "master",
+    "sounds": [
+      "switch_throw"
+    ]
+  },
+  "synth_sweep": {
+    "category": "master",
+    "sounds": [
+      "synth_sweep"
+    ]
+  },
+  "typewriter_double": {
+    "category": "master",
+    "sounds": [
+      "typewriter_double"
+    ]
+  },
+  "well_oiled": {
+    "category": "master",
+    "sounds": [
+      "well_oiled"
+    ]
+  },
+  "cash_register_cha_ching_sound_effect": {
+    "category": "master",
+    "sounds": [
+      "cash_register_cha_ching_sound_effect"
+    ]
+  }
+}

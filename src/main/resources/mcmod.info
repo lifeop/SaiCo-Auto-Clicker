@@ -9,7 +9,7 @@
   "updateUrl": "",
   "authorList": ["Life"],
   "credits": "Life",
-  "logoFile": "",
+  "logoFile": "textures/gui/saico_logo.png",
   "screenshots": [],
   "dependencies": []
 }
