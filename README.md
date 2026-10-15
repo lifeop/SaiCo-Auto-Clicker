@@ -26,8 +26,6 @@ Settings are saved to `.minecraft/config/saicoautoclicker.cfg`.
 
 All three can be changed in the settings menu or in Minecraft's Controls screen, under **SaiCo Auto-Clicker**.
 
-`G` does nothing while the clicker is off. Opening a menu does not turn the clicker off for good: if it was on, it pauses and turns back on when you close the menu.
-
 ## Click modes
 
 **Left click.** Hold left mouse. The clicker swings and attacks the entity under your crosshair at the chosen rate. It does not mine blocks. CPS is capped from 1 to 10.
